@@ -63,31 +63,31 @@ Editor.prototype.update = function() {
 
 Editor.prototype.validate = function(value) {
   var self = this
-  
+
   while ( self.errorLines.length > 0 ) {
     self.editor.removeLineClass( self.errorLines.shift().num, 'background', 'errorLine' )
   }
-  
+
   try {
     this.ast = esprima.parse( value, { tolerant: true, loc: true } );
     var result = this.ast.errors
 
     for ( var i = 0; i < result.length; i ++ ) {
       var error = result[ i ]
-      var lineNumber = error.lineNumber - 1
-      self.errorLines.push( {num: lineNumber, message: error.message} )
-      self.editor.addLineClass( lineNumber, 'background', 'errorLine' )
+      error.lineNumber--;
+      self.errorLines.push(error)
+      self.editor.addLineClass( error.lineNumber, 'background', 'errorLine' )
     }
-    
+
   } catch ( error ) {
-    var lineNumber = error.lineNumber - 1
-    self.errorLines.push( {num: lineNumber, message: error.message} )
-    self.editor.addLineClass( lineNumber, 'background', 'errorLine' )
+    error.lineNumber--;
+    self.errorLines.push(error);
+    self.editor.addLineClass( error.lineNumber, 'background', 'errorLine' )
   }
-  
+
   if (this.results) {
     if (self.errorLines.length === 0) return this.results.setValue('')
-    var numLines = self.errorLines[self.errorLines.length - 1].num
+    var numLines = self.errorLines[self.errorLines.length - 1].lineNumber
     var lines = []
     for (var i = 0; i < numLines; i++) lines[i] = ''
     self.errorLines.map(function(errLine) {
@@ -95,29 +95,29 @@ Editor.prototype.validate = function(value) {
     })
     this.results.setValue(lines.join('\n'))
   }
-  
+
   return self.errorLines.length === 0
 }
 
 Editor.prototype.addDropHandler = function () {
   var self = this
   this.element.addEventListener( 'drop', function ( event ) {
-    
+
     event.preventDefault()
     event.stopPropagation()
-    
+
     var file = event.dataTransfer.files[ 0 ]
-    
+
     var reader = new FileReader()
-    
+
     reader.onload = function ( event ) {
       self.editor.setValue( event.target.result )
     }
-    
+
     reader.readAsText( file )
-    
+
   }, false )
-  
+
 }
 
 Editor.prototype.getValue = function() {
