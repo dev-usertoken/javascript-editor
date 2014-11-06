@@ -65,7 +65,7 @@ Editor.prototype.validate = function(value) {
   var self = this
 
   while ( self.errorLines.length > 0 ) {
-    self.editor.removeLineClass( self.errorLines.shift().num, 'background', 'errorLine' )
+    self.editor.removeLineClass( self.errorLines.shift().lineNumber, 'background', 'errorLine' )
   }
 
   try {
