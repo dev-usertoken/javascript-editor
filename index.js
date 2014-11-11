@@ -56,17 +56,15 @@ function Editor(opts) {
 inherits(Editor, events.EventEmitter)
 
 Editor.prototype.update = function() {
-  var hasErrors = this.validate(this.editor.getValue())
-  this.emit('valid', hasErrors, this.ast)
-  return hasErrors
+  var errors = this.validate(this.editor.getValue());
+  this.emit('update', (errors.length) ? errors : null, this.ast);
+  return !!errors.length;
 }
 
 Editor.prototype.validate = function(value) {
   var self = this
 
-  while ( self.errorLines.length > 0 ) {
-    self.editor.removeLineClass( self.errorLines.shift().lineNumber, 'background', 'errorLine' )
-  }
+  var errors = [];
 
   try {
     this.ast = esprima.parse( value, { tolerant: true, loc: true } );
@@ -75,28 +73,15 @@ Editor.prototype.validate = function(value) {
     for ( var i = 0; i < result.length; i ++ ) {
       var error = result[ i ]
       error.lineNumber--;
-      self.errorLines.push(error)
-      self.editor.addLineClass( error.lineNumber, 'background', 'errorLine' )
+      errors.push(error);
     }
 
   } catch ( error ) {
     error.lineNumber--;
-    self.errorLines.push(error);
-    self.editor.addLineClass( error.lineNumber, 'background', 'errorLine' )
+    errors.push(error);
   }
 
-  if (this.results) {
-    if (self.errorLines.length === 0) return this.results.setValue('')
-    var numLines = self.errorLines[self.errorLines.length - 1].lineNumber
-    var lines = []
-    for (var i = 0; i < numLines; i++) lines[i] = ''
-    self.errorLines.map(function(errLine) {
-      lines[errLine.num] = errLine.message
-    })
-    this.results.setValue(lines.join('\n'))
-  }
-
-  return self.errorLines.length === 0
+  return errors;
 }
 
 Editor.prototype.addDropHandler = function () {
